@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoodCanvas - 情绪抽象画生成器</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0f;--card:rgba(255,255,255,0.04);--card-hover:rgba(255,255,255,0.08);
+  --border:rgba(255,255,255,0.08);--text:#e8e8ed;--text-dim:#7a7a8a;
+  --accent:#7c5cfc;--accent-light:#a78bfa;--accent-glow:rgba(124,92,252,0.3);
+  --success:#34d399;--error:#f87171;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.bg-orb{position:fixed;border-radius:50%;filter:blur(120px);opacity:.15;pointer-events:none;z-index:0}
+.bg-orb-1{width:600px;height:600px;background:#7c5cfc;top:-200px;left:-200px}
+.bg-orb-2{width:500px;height:500px;background:#ec4899;bottom:-150px;right:-150px}
+.bg-orb-3{width:400px;height:400px;background:#06b6d4;top:50%;left:50%;transform:translate(-50%,-50%)}
+.container{max-width:1100px;margin:0 auto;padding:24px 20px;position:relative;z-index:1}
+
+/* Header */
+header{text-align:center;padding:48px 0 36px}
+header h1{font-size:2.4rem;font-weight:800;background:linear-gradient(135deg,#7c5cfc,#ec4899,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-.02em}
+header p{color:var(--text-dim);margin-top:10px;font-size:1.05rem;max-width:560px;margin-inline:auto;line-height:1.6}
+
+/* Steps indicator */
+.steps{display:flex;justify-content:center;gap:8px;margin:32px 0 40px}
+.step{display:flex;align-items:center;gap:8px;padding:8px 18px;border-radius:100px;background:var(--card);border:1px solid var(--border);font-size:.85rem;color:var(--text-dim);transition:all .3s}
+.step.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.step.done{background:rgba(52,211,153,.15);color:var(--success);border-color:rgba(52,211,153,.3)}
+.step-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;background:rgba(255,255,255,.1)}
+.step.active .step-num{background:rgba(255,255,255,.2)}
+.step.done .step-num{background:rgba(52,211,153,.2)}
+
+/* Upload area */
+.upload-zone{border:2px dashed var(--border);border-radius:20px;padding:48px 24px;text-align:center;cursor:pointer;transition:all .3s;background:var(--card);position:relative;overflow:hidden}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:rgba(124,92,252,.05)}
+.upload-zone.has-image{padding:0;border-style:solid}
+.upload-zone input{display:none}
+.upload-icon{font-size:3rem;margin-bottom:12px;opacity:.6}
+.upload-zone p{color:var(--text-dim);font-size:.95rem}
+.upload-zone small{color:var(--text-dim);opacity:.6;font-size:.8rem;margin-top:6px;display:block}
+.preview-img{width:100%;max-height:400px;object-fit:contain;display:block;border-radius:18px}
+.remove-img{position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:2}
+.remove-img:hover{background:var(--error)}
+
+/* Input section */
+.input-section{margin-top:28px}
+.text-input-wrap{position:relative}
+.text-input-wrap textarea{width:100%;min-height:100px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 52px 16px 18px;color:var(--text);font-size:1rem;font-family:inherit;resize:vertical;outline:none;transition:border-color .3s}
+.text-input-wrap textarea:focus{border-color:var(--accent)}
+.text-input-wrap textarea::placeholder{color:var(--text-dim)}
+.voice-btn{position:absolute;right:14px;bottom:14px;width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;transition:all .2s}
+.voice-btn:hover{border-color:var(--accent);color:var(--accent)}
+.voice-btn.recording{background:var(--error);color:#fff;border-color:var(--error);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* Submit button */
+.submit-btn{display:block;width:100%;margin-top:24px;padding:16px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--accent),#ec4899);color:#fff;font-size:1.1rem;font-weight:700;cursor:pointer;transition:all .3s;letter-spacing:.02em}
+.submit-btn:hover{transform:translateY(-1px);box-shadow:0 8px 30px var(--accent-glow)}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* Loading */
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(10,10,15,.85);z-index:100;align-items:center;justify-content:center;flex-direction:column;gap:20px}
+.loading-overlay.active{display:flex}
+.loader{width:56px;height:56px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:1.05rem;color:var(--text-dim)}
+.loading-sub{font-size:.85rem;color:var(--text-dim);opacity:.6}
+
+/* Results */
+.results{display:none;margin-top:48px}
+.results.show{display:block;animation:fadeUp .5s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+.emotion-badge{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border-radius:100px;background:linear-gradient(135deg,rgba(124,92,252,.15),rgba(236,72,153,.15));border:1px solid rgba(124,92,252,.2);margin-bottom:28px;font-size:.95rem}
+.emotion-badge .label{color:var(--text-dim)}
+.emotion-badge .value{color:var(--accent-light);font-weight:700}
+
+.paintings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+.painting-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;transition:all .3s;position:relative}
+.painting-card:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.painting-card.selected{border-color:var(--success);box-shadow:0 0 0 2px var(--success),0 12px 40px rgba(52,211,153,.15)}
+.painting-card .img-wrap{aspect-ratio:1;overflow:hidden;background:#111}
+.painting-card img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
+.painting-card:hover img{transform:scale(1.03)}
+.painting-card .info{padding:14px 16px}
+.painting-card .title{font-weight:600;font-size:.95rem;margin-bottom:4px}
+.painting-card .variation{color:var(--text-dim);font-size:.82rem;line-height:1.4}
+.painting-card .select-badge{position:absolute;top:12px;right:12px;background:var(--success);color:#fff;font-size:.75rem;font-weight:700;padding:4px 12px;border-radius:100px;display:none}
+.painting-card.selected .select-badge{display:block}
+
+.selected-bar{display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(16,16,24,.95);border:1px solid var(--border);border-radius:16px;padding:14px 24px;z-index:50;backdrop-filter:blur(16px);align-items:center;gap:16px}
+.selected-bar.show{display:flex}
+.selected-bar .chosen{color:var(--text-dim);font-size:.9rem}
+.selected-bar .chosen strong{color:var(--success)}
+.selected-bar button{padding:10px 24px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-weight:600;cursor:pointer;transition:all .2s;font-size:.9rem}
+.selected-bar button:hover{background:var(--accent-light)}
+
+/* Error */
+.error-toast{display:none;position:fixed;top:24px;left:50%;transform:translateX(-50%);background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.3);color:var(--error);padding:14px 28px;border-radius:12px;z-index:200;font-size:.9rem;max-width:500px;text-align:center}
+.error-toast.show{display:block;animation:fadeUp .3s ease}
+
+/* Reset */
+.reset-btn{display:inline-flex;align-items:center;gap:6px;margin-top:32px;padding:10px 22px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text-dim);cursor:pointer;font-size:.9rem;transition:all .2s}
+.reset-btn:hover{border-color:var(--accent);color:var(--text)}
+
+@media(max-width:640px){
+  header h1{font-size:1.7rem}
+  .steps{flex-wrap:wrap}
+  .paintings-grid{grid-template-columns:1fr}
+  .container{padding:16px 12px}
+}
+</style>
+</head>
+<body>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+<div class="bg-orb bg-orb-3"></div>
+
+<div class="container">
+  <header>
+    <h1>MoodCanvas</h1>
+    <p>上传一张图片，写下你的心情，AI 将为你生成 5 幅独一无二的抽象画作</p>
+  </header>
+
+  <div class="steps">
+    <div class="step active" id="step1"><span class="step-num">1</span>上传图片</div>
+    <div class="step" id="step2"><span class="step-num">2</span>描述心情</div>
+    <div class="step" id="step3"><span class="step-num">3</span>生成画作</div>
+  </div>
+
+  <!-- Step 1: Upload -->
+  <section id="uploadSection">
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept="image/*">
+      <div class="upload-icon">&#128247;</div>
+      <p>点击或拖拽上传图片</p>
+      <small>支持 JPG / PNG / WEBP</small>
+    </div>
+  </section>
+
+  <!-- Step 2: Text + Submit -->
+  <section class="input-section" id="inputSection">
+    <div class="text-input-wrap">
+      <textarea id="moodText" placeholder="描述你此刻的心情，比如：&quot;今天阳光很好，但总觉得有点孤单&quot;..." maxlength="500"></textarea>
+      <button class="voice-btn" id="voiceBtn" title="语音输入">&#127908;</button>
+    </div>
+    <button class="submit-btn" id="submitBtn" disabled>生成我的抽象画</button>
+  </section>
+
+  <!-- Results -->
+  <section class="results" id="results">
+    <div class="emotion-badge" id="emotionBadge">
+      <span class="label">情绪：</span>
+      <span class="value" id="emotionText"></span>
+    </div>
+    <div class="paintings-grid" id="paintingsGrid"></div>
+    <button class="reset-btn" id="resetBtn">&#8634; 重新创作</button>
+  </section>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loading">
+  <div class="loader"></div>
+  <div class="loading-text" id="loadingText">正在分析你的情绪...</div>
+  <div class="loading-sub" id="loadingSub">AI 正在阅读你的图片和文字</div>
+</div>
+
+<!-- Error toast -->
+<div class="error-toast" id="errorToast"></div>
+
+<!-- Selected bar -->
+<div class="selected-bar" id="selectedBar">
+  <span class="chosen">已选择：<strong id="selectedTitle"></strong></span>
+  <button id="downloadBtn">下载画作</button>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const API_BASE = window.location.origin;
+
+let selectedFile = null;
+let selectedCard = null;
+
+// Upload
+const uploadZone = $('uploadZone');
+const fileInput = $('fileInput');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
+
+function handleFile(file) {
+  if (!file.type.startsWith('image/')) { showError('请上传图片文件'); return; }
+  selectedFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    uploadZone.classList.add('has-image');
+    uploadZone.innerHTML = `<img src="${e.target.result}" class="preview-img"><button class="remove-img" onclick="removeImage(event)">&#10005;</button>`;
+    updateStep(2);
+    checkReady();
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeImage(e) {
+  e.stopPropagation();
+  selectedFile = null;
+  uploadZone.classList.remove('has-image');
+  uploadZone.innerHTML = `<input type="file" id="fileInput" accept="image/*"><div class="upload-icon">&#128247;</div><p>点击或拖拽上传图片</p><small>支持 JPG / PNG / WEBP</small>`;
+  $('fileInput').addEventListener('change', ev => { if (ev.target.files.length) handleFile(ev.target.files[0]); });
+  updateStep(1);
+  checkReady();
+}
+
+// Text
+$('moodText').addEventListener('input', checkReady);
+
+function checkReady() {
+  $('submitBtn').disabled = !(selectedFile && $('moodText').value.trim());
+}
+
+// Voice
+const voiceBtn = $('voiceBtn');
+let recognition = null;
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.lang = 'zh-CN';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.onresult = e => {
+    const t = Array.from(e.results).map(r => r[0].transcript).join('');
+    $('moodText').value = t;
+    checkReady();
+  };
+  recognition.onend = () => voiceBtn.classList.remove('recording');
+  voiceBtn.addEventListener('click', () => {
+    if (voiceBtn.classList.contains('recording')) { recognition.stop(); }
+    else { recognition.start(); voiceBtn.classList.add('recording'); }
+  });
+} else {
+  voiceBtn.style.display = 'none';
+}
+
+// Steps
+function updateStep(n) {
+  [1,2,3].forEach(i => {
+    const el = $('step'+i);
+    el.classList.remove('active','done');
+    if (i < n) el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+  });
+}
+
+// Submit
+$('submitBtn').addEventListener('click', async () => {
+  if (!selectedFile || !$('moodText').value.trim()) return;
+
+  const formData = new FormData();
+  formData.append('image', selectedFile);
+  formData.append('text', $('moodText').value.trim());
+
+  showLoading();
+
+  try {
+    const resp = await fetch(`${API_BASE}/api/process`, { method: 'POST', body: formData });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.detail || `请求失败 (${resp.status})`);
+    }
+    const data = await resp.json();
+    hideLoading();
+    showResults(data);
+    updateStep(3);
+  } catch (err) {
+    hideLoading();
+    showError(err.message);
+  }
+});
+
+function showLoading() {
+  $('loading').classList.add('active');
+  const texts = [
+    ['正在分析你的情绪...', 'AI 正在阅读你的图片和文字'],
+    ['正在构思画作...', '根据情绪色彩生成创作指令'],
+    ['正在绘制抽象画...', '生成 5 幅独一无二的画作']
+  ];
+  let i = 0;
+  window._loadingTimer = setInterval(() => {
+    i = (i + 1) % texts.length;
+    $('loadingText').textContent = texts[i][0];
+    $('loadingSub').textContent = texts[i][1];
+  }, 3000);
+}
+
+function hideLoading() {
+  $('loading').classList.remove('active');
+  clearInterval(window._loadingTimer);
+}
+
+function showResults(data) {
+  const emotion = data.emotion;
+  $('emotionText').textContent = `${emotion.primary} / ${emotion.secondary}`;
+
+  const grid = $('paintingsGrid');
+  grid.innerHTML = '';
+  data.paintings.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'painting-card';
+    card.innerHTML = `
+      <div class="img-wrap">${p.image_url ? `<img src="${p.image_url}" alt="${p.title}" loading="lazy">` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-dim)">图片生成失败</div>'}</div>
+      <div class="info">
+        <div class="title">${p.title}</div>
+      </div>
+      <span class="select-badge">已选择</span>
+    `;
+    card.addEventListener('click', () => selectPainting(card, p));
+    grid.appendChild(card);
+  });
+
+  $('results').classList.add('show');
+  $('selectedBar').classList.remove('show');
+  selectedCard = null;
+  setTimeout(() => $('results').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+function selectPainting(card, painting) {
+  document.querySelectorAll('.painting-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedCard = painting;
+  $('selectedTitle').textContent = painting.title;
+  $('selectedBar').classList.add('show');
+}
+
+// Download
+$('downloadBtn').addEventListener('click', () => {
+  if (!selectedCard || !selectedCard.image_url) return;
+  const a = document.createElement('a');
+  a.href = selectedCard.image_url;
+  a.download = selectedCard.title + '.png';
+  a.target = '_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+});
+
+// Reset
+$('resetBtn').addEventListener('click', () => {
+  $('results').classList.remove('show');
+  $('selectedBar').classList.remove('show');
+  removeImage(new Event('click'));
+  $('moodText').value = '';
+  updateStep(1);
+  checkReady();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// Error
+function showError(msg) {
+  $('errorToast').textContent = msg;
+  $('errorToast').classList.add('show');
+  setTimeout(() => $('errorToast').classList.remove('show'), 5000);
+}
+</script>
+</body>
+</html>
