@@ -13,8 +13,8 @@ from openai import AsyncOpenAI
 from PIL import Image
 import io
 
-from app.config import settings
-from app.models.schemas import DesignFeatures
+from creative_design_module.app.config import settings
+from creative_design_module.app.models.schemas import DesignFeatures
 
 logger = logging.getLogger(__name__)
 

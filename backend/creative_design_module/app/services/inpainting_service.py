@@ -12,7 +12,7 @@ from PIL import Image
 import numpy as np
 import io
 
-from app.config import settings
+from creative_design_module.app.config import settings
 
 logger = logging.getLogger(__name__)
 

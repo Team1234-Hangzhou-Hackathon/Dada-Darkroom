@@ -9,13 +9,13 @@ from typing import Optional
 
 from fastapi import APIRouter, Form, HTTPException
 
-from app.models.schemas import (
+from creative_design_module.app.models.schemas import (
     Generate3DResponse,
     MaterialSettings,
 )
-from app.services.reconstruction_3d import reconstruction_3d
-from app.services.texture_service import texture_service
-from app.utils.file_manager import get_session_output_dir
+from creative_design_module.app.services.reconstruction_3d import reconstruction_3d
+from creative_design_module.app.services.texture_service import texture_service
+from creative_design_module.app.utils.file_manager import get_session_output_dir
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1", tags=["阶段三：3D 重建"])

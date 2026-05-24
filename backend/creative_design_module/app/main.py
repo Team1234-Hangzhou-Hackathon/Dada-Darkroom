@@ -11,8 +11,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.config import settings
-from app.routers import stage1_analyze, stage2_modify, stage3_generate, stage4_finalize
+from creative_design_module.app.config import settings
+from creative_design_module.app.routers import stage1_analyze, stage2_modify, stage3_generate, stage4_finalize
 
 # ──────────────────────────────────────────────
 # 日志配置

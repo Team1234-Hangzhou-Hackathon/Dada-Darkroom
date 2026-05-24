@@ -95,13 +95,42 @@ async def analyze(image: bytes = File(...), text: str = Form(...)):
     return AnalyzeResponse(emotion=result["emotion"], paintings=result["paintings"])
 
 
-@app.post("/api/generate", response_model=GenerateResponse)
-async def generate(req: GenerateRequest):
-    if not req.prompts:
-        raise HTTPException(400, "prompts 不能为空")
+@app.post("/api/creative-design/auto")
+async def creative_design_auto(
+    image: bytes = File(...),
+    text: str = Form(...),
+):
+    if not text.strip():
+        raise HTTPException(400, "文字描述不能为空")
 
-    images = await generate_images(req.prompts)
-    return GenerateResponse(images=images)
+    image_b64 = compress_image(image)
+
+    try:
+        stage1 = await stage1_analyze.stage1_analyze(image=image, text=text)
+        stage2 = await stage2_modify.stage2_modify(
+            session_id=stage1["session_id"],
+            image=image,
+        )
+        stage3 = await stage3_generate.stage3_generate(
+            session_id=stage1["session_id"],
+            prompt=text,
+        )
+        stage4 = await stage4_finalize.stage4_finalize(
+            session_id=stage1["session_id"],
+        )
+    except Exception as e:
+        raise HTTPException(502, str(e))
+
+    return {
+        "session_id": stage1["session_id"],
+        "stage1": stage1,
+        "stage2": stage2,
+        "stage3": stage3,
+        "stage4": stage4,
+        "gallery_url": stage4.get("gallery_url"),
+        "model_url": stage4.get("model_url"),
+    }
+
 
 
 @app.get("/")

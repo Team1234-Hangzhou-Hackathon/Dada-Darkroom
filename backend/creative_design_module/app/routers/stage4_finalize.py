@@ -8,12 +8,12 @@ import logging
 
 from fastapi import APIRouter, Form, HTTPException
 
-from app.models.schemas import (
+from creative_design_module.app.models.schemas import (
     FinalizeResponse,
     MeshStats,
 )
-from app.services.mesh_processor import mesh_processor
-from app.utils.file_manager import get_session_output_dir, sync_model_to_gallery
+from creative_design_module.app.services.mesh_processor import mesh_processor
+from creative_design_module.app.utils.file_manager import get_session_output_dir, sync_model_to_gallery
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1", tags=["阶段四：修复与导出"])

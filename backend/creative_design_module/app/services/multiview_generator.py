@@ -10,8 +10,8 @@ from typing import Optional
 
 import httpx
 
-from app.config import settings
-from app.models.schemas import DesignFeatures
+from creative_design_module.app.config import settings
+from creative_design_module.app.models.schemas import DesignFeatures
 
 logger = logging.getLogger(__name__)
 

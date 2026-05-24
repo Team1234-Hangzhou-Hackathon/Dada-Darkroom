@@ -9,9 +9,9 @@ from typing import Optional
 
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 
-from app.models.schemas import ModifyDesignResponse
-from app.services.inpainting_service import inpainting_service
-from app.utils.file_manager import (
+from creative_design_module.app.models.schemas import ModifyDesignResponse
+from creative_design_module.app.services.inpainting_service import inpainting_service
+from creative_design_module.app.utils.file_manager import (
     save_upload_file,
     get_session_upload_dir,
     get_session_output_dir,

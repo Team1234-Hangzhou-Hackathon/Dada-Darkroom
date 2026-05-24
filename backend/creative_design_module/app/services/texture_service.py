@@ -9,8 +9,8 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from app.config import settings
-from app.models.schemas import MaterialSettings
+from creative_design_module.app.config import settings
+from creative_design_module.app.models.schemas import MaterialSettings
 
 logger = logging.getLogger(__name__)
 

@@ -11,7 +11,7 @@ from typing import Optional
 
 from fastapi import UploadFile, HTTPException
 
-from app.config import settings
+from creative_design_module.app.config import settings
 
 
 def _ensure_dir(path: Path) -> Path:

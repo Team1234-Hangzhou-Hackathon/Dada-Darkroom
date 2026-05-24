@@ -16,7 +16,7 @@ from pathlib import Path
 
 import httpx
 
-from app.config import settings
+from creative_design_module.app.config import settings
 
 logger = logging.getLogger(__name__)
 

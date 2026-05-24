@@ -8,10 +8,10 @@ import logging
 
 from fastapi import APIRouter, UploadFile, File, HTTPException
 
-from app.models.schemas import AnalyzeEvolveResponse
-from app.services.vision_analyzer import vision_analyzer
-from app.services.multiview_generator import multiview_generator
-from app.utils.file_manager import (
+from creative_design_module.app.models.schemas import AnalyzeEvolveResponse
+from creative_design_module.app.services.vision_analyzer import vision_analyzer
+from creative_design_module.app.services.multiview_generator import multiview_generator
+from creative_design_module.app.utils.file_manager import (
     create_session_dir,
     save_upload_file,
     get_session_upload_dir,
