@@ -1,0 +1,2 @@
+Requirement already satisfied: trimesh in c:\users\28160\appdata\roaming\trae solo cn\modulardata\ai-agent\vm\tools\python\lib\site-packages (4.12.2)
+Requirement already satisfied: numpy>=1.20 in c:\users\28160\appdata\roaming\trae solo cn\modulardata\ai-agent\vm\tools\python\lib\site-packages (from trimesh) (2.2.6)
