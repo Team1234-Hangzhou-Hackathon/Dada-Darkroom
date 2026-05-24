@@ -1,0 +1,27 @@
+# 创意设计管线 - Python 依赖
+# Web 框架
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+
+# 数据验证
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# AI / API 客户端
+openai>=1.6.0
+httpx>=0.25.0
+
+# 3D 网格处理（核心）
+trimesh>=4.0.0
+pymeshlab>=2023.12
+
+# 科学计算
+numpy>=1.26.0
+scipy>=1.11.0
+
+# 图像处理
+Pillow>=10.1.0
+
+# 异步文件操作
+aiofiles>=23.2.0

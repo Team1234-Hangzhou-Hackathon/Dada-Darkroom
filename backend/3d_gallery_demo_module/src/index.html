@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D 模型交互式展厅</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f0f0f0;
+        }
+        #header {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 1.5em;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        #container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        #sidebar {
+            width: 250px;
+            background-color: #f8f8f8;
+            padding: 15px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            flex-shrink: 0;
+            z-index: 5;
+        }
+        #sidebar h2 {
+            margin-top: 0;
+            color: #333;
+            font-size: 1.2em;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        #model-list button {
+            display: block;
+            width: 100%;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fff;
+            text-align: left;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #model-list button:hover {
+            background-color: #e9e9e9;
+            border-color: #ccc;
+        }
+        #model-list button.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        #viewer-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            background-color: transparent; /* Allow environment-image to show */
+        }
+        #loading-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2em;
+            color: #555;
+            background-color: rgba(255,255,255,0.8);
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        3D 模型交互式展厅
+    </div>
+    <div id="container">
+        <div id="sidebar">
+            <h2>模型列表</h2>
+            <div id="model-list">
+                <!-- 模型按钮将由 JavaScript 动态生成 -->
+                <p id="no-models-message">正在加载模型...</p>
+            </div>
+        </div>
+        <div id="viewer-container">
+            <model-viewer
+                id="modelViewer"
+                camera-controls
+                auto-rotate
+                shadow-intensity="1.5"
+                environment-image="neutral"
+                alt="3D Model"
+                ar
+                ar-modes="webxr scene-viewer quick-look"
+                loading="eager"
+            ></model-viewer>
+            <div id="loading-indicator">加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        const modelViewer = document.getElementById('modelViewer');
+        const modelListDiv = document.getElementById('model-list');
+        const noModelsMessage = document.getElementById('no-models-message');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const modelsManifestUrl = '../outputs/models.json'; // 相对于 index.html 的路径
+
+        let currentActiveButton = null;
+
+        async function fetchModelsManifest() {
+            try {
+                const response = await fetch(modelsManifestUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const models = await response.json();
+                return models;
+            } catch (error) {
+                console.error('Error fetching models manifest:', error);
+                return [];
+            }
+        }
+
+        function showLoading() {
+            loadingIndicator.style.display = 'block';
+        }
+
+        function hideLoading() {
+            loadingIndicator.style.display = 'none';
+        }
+
+        function switchModel(modelUrl, button) {
+            if (modelViewer.src === modelUrl) {
+                return; // 如果是当前模型，则不切换
+            }
+
+            showLoading();
+            modelViewer.src = modelUrl;
+
+            // 移除之前激活按钮的样式
+            if (currentActiveButton) {
+                currentActiveButton.classList.remove('active');
+            }
+            // 添加当前激活按钮的样式
+            button.classList.add('active');
+            currentActiveButton = button;
+        }
+
+        modelViewer.addEventListener('load', () => {
+            hideLoading();
+            console.log('Model loaded successfully.');
+        });
+
+        modelViewer.addEventListener('error', (event) => {
+            hideLoading();
+            console.error('Error loading model:', event);
+            alert('模型加载失败，请检查模型文件或路径。');
+        });
+
+        async function initGallery() {
+            const models = await fetchModelsManifest();
+
+            if (models.length === 0) {
+                noModelsMessage.textContent = '未找到任何模型。请将 .obj 或 .fbx 文件放入 inputs/ 目录并运行 process.py。';
+                return;
+            }
+
+            modelListDiv.innerHTML = ''; // 清空加载消息
+
+            models.forEach((model, index) => {
+                const button = document.createElement('button');
+                button.textContent = model.name;
+                button.title = model.name; // 添加 title 属性以显示完整名称
+                button.addEventListener('click', () => {
+                    switchModel(model.url, button);
+                });
+                modelListDiv.appendChild(button);
+
+                // 默认加载第一个模型
+                if (index === 0) {
+                    switchModel(model.url, button);
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initGallery);
+    </script>
+</body>
+</html>
