@@ -59,7 +59,9 @@ chmod +x start.sh
 
 以上脚本将同时启动 FastAPI 后端服务和 Vite 前端开发服务器。按 `Ctrl+C` 可停止所有服务。
 
-## 停止项目
+## 结束服务脚本
+
+停止脚本已强化，可用于一键结束由启动脚本拉起的 FastAPI 后端服务和 Vite 前端开发服务器。
 
 ### Windows
 
@@ -76,7 +78,7 @@ chmod +x stop.sh
 ./stop.sh
 ```
 
-以上脚本将终止所有相关的后端 Python 进程和前端 Node.js 进程。
+以上脚本会尝试终止相关的后端 Python 进程和前端 Node.js 进程，方便在测试后快速结束服务。
 
 ## Git 初始化
 

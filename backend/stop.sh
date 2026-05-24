@@ -6,9 +6,10 @@ export LANG=zh_CN.UTF-8
 echo "正在停止 Dada-Darkroom 服务..."
 
 # 停止后端 Python 进程 (uvicorn)
-pkill -f "uvicorn core_modules.main:app"
+pkill -f "uvicorn core_modules.main:app" || true
+pkill -f "python -m uvicorn core_modules.main:app" || true
 
 # 停止前端 Node.js 进程 (npm run dev)
-pkill -f "npm run dev"
+pkill -f "npm run dev" || true
 
 echo "服务停止完成。"

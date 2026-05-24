@@ -27,7 +27,7 @@ async def analyze_mood(image_b64: str, user_text: str) -> dict:
         try:
             response = await asyncio.to_thread(
                 client.chat.completions.create,
-                model=ZHIPU_VISION_MODEL,
+                model=OPENAI_VISION_MODEL,
                 messages=messages,
                 max_tokens=1024,
                 temperature=0.8,

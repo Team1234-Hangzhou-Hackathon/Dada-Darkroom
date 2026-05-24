@@ -38,9 +38,11 @@ async def generate_images(prompts: list[str]) -> list[dict]:
 
 async def _generate_one(prompt: str) -> dict:
     response = await asyncio.to_thread(
-        client.images.generations,
-        model=ZHIPU_IMAGE_MODEL,
+        client.images.generations.create,
+        model=OPENAI_IMAGE_MODEL,
         prompt=prompt,
+        size="1024x1024", # Default size, can be made configurable
+        n=1,
     )
     url = response.data[0].url
     logger.info("Generated image for prompt: %s...", prompt[:50])
