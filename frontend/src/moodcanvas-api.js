@@ -42,3 +42,28 @@ export async function generatePaintings(imageInput, description) {
 
   return paintings;
 }
+
+export async function generateCreativeDesignFromUrl(imageUrl, description) {
+  const imageResponse = await fetch(imageUrl);
+  if (!imageResponse.ok) {
+    throw new Error('读取选中图片失败，无法进入创意设计流程。');
+  }
+
+  const blob = await imageResponse.blob();
+  const file = new File([blob], 'selected-painting.png', { type: blob.type || 'image/png' });
+  const formData = new FormData();
+  formData.append('image', file, file.name);
+  formData.append('text', description.trim());
+
+  const response = await fetch('/api/creative-design/auto', {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.detail || '创意设计流程失败，请确认后端服务已启动后重试。');
+  }
+
+  return response.json();
+}

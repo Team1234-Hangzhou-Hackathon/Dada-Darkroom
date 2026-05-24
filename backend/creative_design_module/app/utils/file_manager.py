@@ -111,10 +111,8 @@ def sync_model_to_gallery(final_model_path: str, session_id: str) -> dict[str, s
     if not src_model.exists():
         raise FileNotFoundError(f"最终模型不存在，无法同步到展厅: {final_model_path}")
 
-    # 当前文件位于 backend/creative-design/app/utils/file_manager.py
-    # parents[3] => backend
     backend_dir = Path(__file__).resolve().parents[3]
-    gallery_input_dir = backend_dir / "3d-gallery-demo" / "inputs"
+    gallery_input_dir = backend_dir / "3d_gallery_demo_module" / "inputs"
     gallery_input_dir.mkdir(parents=True, exist_ok=True)
 
     safe_session = session_id or src_model.parent.name
